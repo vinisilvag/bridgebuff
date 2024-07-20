@@ -12,4 +12,7 @@ class Scores:
         return {}
 
     def get_by_id(self, id: int):
-        return [score for score in self.scores if score["id"] == id]
+        for score in self.scores:
+            if score["id"] == id:
+                return score
+        return None
