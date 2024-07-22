@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from helpers.paginate import paginate
 from helpers.parse_params import parse_query_params
 from services.scores import Scores
 
@@ -16,7 +17,10 @@ def rank_sunk():
     if error:
         return error
 
-    return jsonify()
+    games = scores.sorted_by_sunk()
+    pagination_response = paginate("sunk", games, limit, start)
+
+    return jsonify(pagination_response)
 
 
 @rank_handler.route("/escaped", methods=["GET"])
@@ -28,4 +32,7 @@ def rank_escaped():
     if error:
         return error
 
-    return jsonify()
+    games = scores.sorted_by_escaped()
+    pagination_response = paginate("escaped", games, limit, start)
+
+    return jsonify(pagination_response)
