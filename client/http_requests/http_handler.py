@@ -1,6 +1,7 @@
 import socket
 import json
 import select
+import logging
 
 class HttpClientHandler:
     def __init__(self, host, port=5000, timeout=10):
@@ -27,7 +28,7 @@ class HttpClientHandler:
                 cliente_socket.settimeout(self.timeout)  # Definir tempo limite
                 cliente_socket.connect(sockaddr)
                 break  # Conexão bem-sucedida, sair do loop
-            except socket.error:
+            except (socket.timeout, socket.error):
                 if cliente_socket:
                     cliente_socket.close()
                 cliente_socket = None
@@ -38,7 +39,7 @@ class HttpClientHandler:
         try:
             # Formular a requisição
             linha_requisicao = f"{method} {path} HTTP/1.1\r\n"
-            cabecalhos =  ""#f"Host: {self.host}" #\r\nConnection: close\r\n\r\n"
+            cabecalhos =  f"Host: {self.host}" #\r\nConnection: close\r\n\r\n"
             requisicao = linha_requisicao + cabecalhos
             
             # Enviar a requisição
@@ -56,18 +57,24 @@ class HttpClientHandler:
                     if not parte:
                         break
                     resposta += parte
-                    print(json.loads(parte.decode('utf-8')) )
-                    print(parte.hex())
+                    logging(resposta)
                 else:
                     raise socket.timeout("Tempo limite de leitura excedido")
-        
+            
+            cliente_socket.close()
+            
+            if resposta:
+                try:
+                    response_json = json.loads(resposta.decode('utf-8'))
+                    return response_json
+                except json.JSONDecodeError:
+                    logging.error("Failed to decode response as JSON")
+                    return resposta.decode('utf-8')
+            else:
+                return resposta
         except socket.timeout:
             raise Exception("Tempo limite excedido durante a comunicação com o servidor")
-        
-        finally:
-            # Fechar o socket
-            cliente_socket.close()
-        
-        # Decodificar e retornar a resposta
-        return resposta.decode('utf-8')
+        except socket.error:
+            logging.error("Failed to establish a connection with the server")
+            raise
 

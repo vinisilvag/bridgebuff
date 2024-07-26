@@ -2,22 +2,23 @@ import sys
 from http_requests.http_handler import HttpClientHandler
 
 def GAS_with_best_performance(host, port):
-    http_handler = HttpClientHandler(host, port)
+    pass
     
-    response = http_handler.make_get_request("/api/rank/sunk?limit={10}&start={1}")
 
+def best_cannon_placements(host, port):
+    http_handler = HttpClientHandler(host, port)
+
+    response = http_handler.make_get_request("/api/rank/sunk?limit=10&start=1")
     print("HTTP Response:")
     print(response)
 
 
 
-def best_cannon_placements():
-    # build and send the request and listen to the server response
     pass
 
 
 def main() -> None:
-    '''if len(sys.argv) - 1 != 4:
+    if len(sys.argv) - 1 != 4:
         print(
             "Invalid arguments.",
             "\nCorrect usage is: python3 client.py <IP> <PORT> <ANALYSIS> <OUTPUT>",
@@ -27,12 +28,7 @@ def main() -> None:
     ip = sys.argv[1]
     port = int(sys.argv[2])
     analysis = int(sys.argv[3])
-    output = sys.argv[4]'''
-
-    # TESTE
-    ip = "127.0.0.1"
-    port = 5000
-    analysis = 1
+    output = sys.argv[4]
 
     #print(ip, port, analysis, output)
 
@@ -40,7 +36,7 @@ def main() -> None:
         case 1:
             GAS_with_best_performance(ip, port)
         case 2:
-            best_cannon_placements()
+            best_cannon_placements(ip, port)
         case _:
             print(
                 "Invalid analysis command.",
