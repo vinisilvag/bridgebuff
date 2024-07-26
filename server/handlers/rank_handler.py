@@ -15,8 +15,10 @@ def rank_sunk():
     limit, start, error = parse_query_params(limit, start)
     if error:
         return error
+    
+    highest_sunk = scores.get_highest_sunk()
 
-    return jsonify()
+    return jsonify(highest_sunk[start:start+limit])
 
 
 @rank_handler.route("/escaped", methods=["GET"])

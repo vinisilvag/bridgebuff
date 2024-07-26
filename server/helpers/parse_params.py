@@ -2,6 +2,9 @@ from flask import jsonify
 
 
 def parse_query_params(limit, start):
+    limit = limit.strip("{}")
+    start = start.strip("{}")
+    
     if limit.isdecimal():
         limit = int(limit)
     else:
@@ -58,4 +61,4 @@ def parse_query_params(limit, start):
             ),
         )
 
-    return limit, start, None
+    return limit-1, start-1, None
