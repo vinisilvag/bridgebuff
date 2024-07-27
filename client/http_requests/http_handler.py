@@ -18,20 +18,20 @@ class HttpClientHandler:
         addr_info = socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM)
         
         # Tentar se conectar preferencialmente usando IPv6
-        cliente_socket = None
+        client_socket = None
         for addr in addr_info:
             family, socktype, proto, canonname, sockaddr = addr
             try:
-                cliente_socket = socket.socket(family, socktype, proto)
-                cliente_socket.settimeout(self.timeout)  # Definir tempo limite
-                cliente_socket.connect(sockaddr)
+                client_socket = socket.socket(family, socktype, proto)
+                client_socket.settimeout(self.timeout)  # Definir tempo limite
+                client_socket.connect(sockaddr)
                 break  # Conexão bem-sucedida, sair do loop
             except (socket.timeout, socket.error):
-                if cliente_socket:
-                    cliente_socket.close()
-                cliente_socket = None
+                if client_socket:
+                    client_socket.close()
+                client_socket = None
         
-        if cliente_socket is None:
+        if client_socket is None:
             raise Exception("Não foi possível conectar ao servidor usando IPv4 ou IPv6")
         
         try:
@@ -42,35 +42,60 @@ class HttpClientHandler:
             print("\n---------REQUISIÇÃO---------\n" + requisicao)
 
             # Enviar a requisição
-            cliente_socket.sendall(requisicao.encode('utf-8'))
+            client_socket.sendall(requisicao.encode('utf-8'))
             
             # Receber a resposta
-            resposta = b""
+            response = b""
+            header_data = b""
             while True:
                 # Usar select para aguardar dados para leitura
-                ready_to_read, _, _ = select.select([cliente_socket], [], [], self.timeout)
+                ready_to_read, _, _ = select.select([client_socket], [], [], self.timeout)
                 
                 if ready_to_read:
-                    parte = cliente_socket.recv(4096)
-                    if not parte:
+                    part = client_socket.recv(4096)
+                    if not part:
                         break
-                    resposta += parte
+                    header_data += part
+                    # Check if headers are complete
+                    if b'\r\n\r\n' in header_data:
+                        break
                 else:
                     raise socket.timeout("Tempo limite de leitura excedido")
-            
-            cliente_socket.close()
-            
-            if resposta:
-                # Split the response into headers and body
-                header_body_split = resposta.split(b'\r\n\r\n', 1)
-                if len(header_body_split) == 2:
-                    header = header_body_split[0]
-                    body = header_body_split[1]
-                    return (header.decode('utf-8'), body.decode('utf-8'))
+                
+            # Separa os dados de cabecalho e corpo
+            headers, body = header_data.split(b'\r\n\r\n', 1)
+            headers = headers.decode('utf-8')
+            response += body
 
-                else:
-                    print("Invalid HTTP response format")
-                    return resposta.decode('utf-8')
+            # Obter o tamanho do corpo a ser recebido por meio do cabecalho "content-length"
+            header_lines = headers.split('\r\n')
+            content_length = None
+            for line in header_lines:
+                if line.lower().startswith('content-length:'):
+                    content_length = int(line.split(':')[1].strip())
+                    break
+            
+            # ler o corpo da resposta de acordo com o tamanho
+            if content_length is not None:
+                remaining_length = content_length - len(body)
+                while remaining_length > 0:
+                    part = client_socket.recv(min(4096, remaining_length))
+                    if not part:
+                        break
+                    response += part
+                    remaining_length -= len(part)
+            
+            # Fechar o socket
+            client_socket.close()
+            
+            # Decodificar e retornar a resposta
+            if response:
+                try:
+                    response_json = json.loads(response.decode('utf-8'))
+                    return response_json
+                except json.JSONDecodeError:
+                    print("Failed to decode response as JSON")
+                    return response.decode('utf-8')
             
         except socket.timeout:
             raise Exception("Tempo limite de comunicação com o servidor excedido.")

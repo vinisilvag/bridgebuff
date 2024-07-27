@@ -8,10 +8,8 @@ def GAS_with_best_performance(host, port):
 def best_cannon_placements(host, port):
     http_handler = HttpClientHandler(host, port)
 
-    (response_header, response_body) = http_handler.make_get_request("/api/rank/sunk?limit=10&start=1")
-    print("\n---------RESPONSE HEADER---------\n" + response_header)
-    print("\n---------RESPONSE BODY---------\n" + response_body)
-
+    responce_1 = http_handler.make_get_request("/api/rank/escaped?limit=50&start=1")
+    print("\n---------RESPONSE BODY---------\n" + str(responce_1))
     # Transformar o corpo da resposta em um dict e calcular a melhor disposição de canhoes
 
     pass
