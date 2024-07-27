@@ -1,0 +1,43 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Bridgebuff API",
+    "description": "Documentação para a API do Bridgebuff, desenvolvida no trabalho prático 3 da disciplina de Redes de Computadores - UFMG.",
+    "version": "0.0.1"
+  },
+  "servers": [
+    {
+      "url": "127.0.0.1:5000/api",
+      "description": "Servidor de desenvolvimento"
+    }
+  ],
+  "components": {},
+  "tags": [
+    {
+      "name": "Book Request",
+      "description": "Example API for requesting and return book requests"
+    }
+  ],
+  "paths": {
+    "/pets": {
+      "get": {
+        "description": "Returns all pets from the system that the user has access to",
+        "responses": {
+          "200": {
+            "description": "A list of pets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/pet"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
