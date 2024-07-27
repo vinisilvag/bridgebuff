@@ -1,8 +1,6 @@
 import socket
 import json
 import select
-import logging
-
 class HttpClientHandler:
     def __init__(self, host, port=5000, timeout=10):
         self.host = host
@@ -39,9 +37,10 @@ class HttpClientHandler:
         try:
             # Formular a requisição
             linha_requisicao = f"{method} {path} HTTP/1.1\r\n"
-            cabecalhos =  f"Host: {self.host}" #\r\nConnection: close\r\n\r\n"
+            cabecalhos  = f"Host: {self.host}\r\nConnection: keep-alive\r\n\r\n"
             requisicao = linha_requisicao + cabecalhos
-            
+            print("\n---------REQUISIÇÃO---------\n" + requisicao)
+
             # Enviar a requisição
             cliente_socket.sendall(requisicao.encode('utf-8'))
             
@@ -49,7 +48,6 @@ class HttpClientHandler:
             resposta = b""
             while True:
                 # Usar select para aguardar dados para leitura
-                print(requisicao)
                 ready_to_read, _, _ = select.select([cliente_socket], [], [], self.timeout)
                 
                 if ready_to_read:
@@ -57,24 +55,26 @@ class HttpClientHandler:
                     if not parte:
                         break
                     resposta += parte
-                    logging(resposta)
                 else:
                     raise socket.timeout("Tempo limite de leitura excedido")
             
             cliente_socket.close()
             
             if resposta:
-                try:
-                    response_json = json.loads(resposta.decode('utf-8'))
-                    return response_json
-                except json.JSONDecodeError:
-                    logging.error("Failed to decode response as JSON")
+                # Split the response into headers and body
+                header_body_split = resposta.split(b'\r\n\r\n', 1)
+                if len(header_body_split) == 2:
+                    header = header_body_split[0]
+                    body = header_body_split[1]
+                    return (header.decode('utf-8'), body.decode('utf-8'))
+
+                else:
+                    print("Invalid HTTP response format")
                     return resposta.decode('utf-8')
-            else:
-                return resposta
+            
         except socket.timeout:
-            raise Exception("Tempo limite excedido durante a comunicação com o servidor")
+            raise Exception("Tempo limite de comunicação com o servidor excedido.")
         except socket.error:
-            logging.error("Failed to establish a connection with the server")
+            print("Falha no estabelecimento de conexão com o servidor.")
             raise
 
