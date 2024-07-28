@@ -43,7 +43,7 @@ class HttpClientHandler:
             linha_requisicao = f"{method} {path} HTTP/1.1\r\n"
             cabecalhos = f"Host: {self.host}\r\nConnection: keep-alive\r\n\r\n"
             requisicao = linha_requisicao + cabecalhos
-            print("\n---------REQUISIÇÃO---------\n" + requisicao)
+            print("---------REQUISIÇÃO---------\n" + requisicao)
 
             # Enviar a requisição
             client_socket.sendall(requisicao.encode("utf-8"))

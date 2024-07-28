@@ -26,6 +26,8 @@ def GAS_with_best_performance(host, port, output):
             immortals[player]["sunk_ships"] / immortals[player]["games"]
         )
 
+    # properly sort this
+
     with open(output, "w") as file:
         writer = csv.writer(file, delimiter=",")
         for player in immortals:
