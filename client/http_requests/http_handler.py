@@ -39,7 +39,7 @@ class HttpClientHandler:
             linha_requisicao = f"{method} {path} HTTP/1.1\r\n"
             cabecalhos  = f"Host: {self.host}\r\nConnection: keep-alive\r\n\r\n"
             requisicao = linha_requisicao + cabecalhos
-            print("\n---------REQUISIÇÃO---------\n" + requisicao)
+            #print("\n---------REQUISIÇÃO---------\n" + requisicao)
 
             # Enviar a requisição
             client_socket.sendall(requisicao.encode('utf-8'))
@@ -52,7 +52,7 @@ class HttpClientHandler:
                 ready_to_read, _, _ = select.select([client_socket], [], [], self.timeout)
                 
                 if ready_to_read:
-                    part = client_socket.recv(4096)
+                    part = client_socket.recv(1024)
                     if not part:
                         break
                     header_data += part
