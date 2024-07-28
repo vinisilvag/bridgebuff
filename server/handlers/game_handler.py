@@ -13,7 +13,7 @@ def fetch_game(game_id):
         return (
             jsonify(
                 {
-                    "error": True,
+                    "code": "game.not.found",
                     "message": f"Game with id = {game_id} does not exist",
                 }
             ),

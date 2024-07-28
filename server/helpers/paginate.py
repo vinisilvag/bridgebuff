@@ -19,8 +19,8 @@ def paginate(rank: str, data, limit: int, start: int):
         "ranking": rank,
         "limit": limit,
         "start": start,
-        "games": filtered_data,
-        # "games": [item["id"] for item in filtered_data],
+        # "games": filtered_data,
+        "games": [item["id"] for item in filtered_data],
         "prev": prev,
         "next": next,
     }

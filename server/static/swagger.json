@@ -1,42 +1,385 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.0.3",
   "info": {
     "title": "Bridgebuff API",
     "description": "Documentação para a API do Bridgebuff, desenvolvida no trabalho prático 3 da disciplina de Redes de Computadores - UFMG.",
+    "contact": {
+      "email": "vinicius.svgomes@gmail.com"
+    },
     "version": "0.0.1"
   },
   "servers": [
     {
-      "url": "127.0.0.1:5000/api",
+      "url": "http://127.0.0.1:5000/api",
       "description": "Servidor de desenvolvimento"
     }
   ],
-  "components": {},
-  "tags": [
-    {
-      "name": "Book Request",
-      "description": "Example API for requesting and return book requests"
-    }
-  ],
   "paths": {
-    "/pets": {
+    "/game/{game_id}": {
       "get": {
-        "description": "Returns all pets from the system that the user has access to",
+        "summary": "Busca de uma partida pelo ID",
+        "description": "Rota responsável por buscar as informações de uma partida a partir de seu ID.",
+        "tags": ["Game"],
+        "parameters": [
+          {
+            "name": "game_id",
+            "in": "path",
+            "description": "ID da partida para a busca.",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "A list of pets.",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/pet"
+                  "type": "object",
+                  "properties": {
+                    "game_id": {
+                      "type": "integer"
+                    },
+                    "game_stats": {
+                      "type": "object",
+                      "$ref": "#/components/schemas/Game"
+                    }
                   }
+                },
+                "example": {
+                  "game_id": 1,
+                  "game_stats": {
+                    "auth": "ifs4:1:2c3bb3f0e946a1afde7d9d0c8c818762a6189e842abd8aaaf85c9faac5b784d2+ifs4:2:cf87a60a90159078acecca4415c0331939ebb28ac5528322ac03d7c26b140b98+e51d06a4174b5385c8daff714827b4b4cb4f93ff1b83af86defee3878c2ae90f",
+                    "cannons": [[3, 1], [1, 1], [8, 3], [3, 3], [7, 2], [2, 2],[3, 2], [6, 3]],
+                    "escaped_ships": 312,
+                    "getcannons_received": 8,
+                    "getturn_received": 1089,
+                    "id": 1,
+                    "last_turn": 272,
+                    "remaining_life_on_escaped_ships": 491,
+                    "servers_authenticated": [1, 2, 3, 4],
+                    "ship_moves": 4438,
+                    "shot_received": 1546,
+                    "sunk_ships": 716,
+                    "tstamp_auth_completion": 1713369173.8847864,
+                    "tstamp_auth_start": 1713369153.8624742,
+                    "tstamp_completion": 1713369232.3878376,
+                    "valid_shots": 1546
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Uma partida com o ID especificado não foi encontrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": "game.not.found",
+                  "message": "Game with id = x does not exist"
                 }
               }
             }
           }
         }
+      }
+    },
+
+    "/ranking/sunk": {
+      "get": {
+        "summary": "Busca as melhores partidas ordenadas pelo número de navios afundados",
+        "description": "Rota responsável por buscar as partidas com o maior número de navios afundados. Essa rota é paginada e, portanto, um chunk de dados pode ser buscado a cada requisição.",
+        "tags": ["Ranking"],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "O número de partidas que serão buscadas na requisição.",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "A posição no ranking do primeiro registro da lista de partidas buscada.",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "$ref": "#/components/schemas/PaginationResponse"
+                },
+                "example": {
+                  "games": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    111,
+                    89,
+                    210,
+                    211,
+                    212,
+                    213
+                  ],
+                  "limit": 10,
+                  "next": "/api/rank/sunk?limit=10&start=11",
+                  "prev": null,
+                  "ranking": "sunk",
+                  "start": 1
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Os parâmetros de query limit ou start não são inteiros ou não respeitam os limites (limit <= 50 e 1 <= start).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": "limit.out.of.bounds",
+                  "message": "Limit query param should be <= 50, received 60"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/ranking/escaped": {
+      "get": {
+        "summary": "Busca as melhores partidas ordenadas pelo número de navios escapados",
+        "description": "Rota responsável por buscar as partidas com o menor número de navios escapados. Essa rota é paginada e, portanto, um chunk de dados pode ser buscado a cada requisição.",
+        "tags": ["Ranking"],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "O número de partidas que serão buscadas na requisição.",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "A posição no ranking do primeiro registro da lista de partidas buscada.",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "$ref": "#/components/schemas/PaginationResponse"
+                },
+                "example": {
+                  "games": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    111,
+                    89,
+                    210,
+                    211,
+                    212,
+                    213
+                  ],
+                  "limit": 10,
+                  "next": "/api/rank/escaped?limit=10&start=11",
+                  "prev": null,
+                  "ranking": "escaped",
+                  "start": 1
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Os parâmetros de query limit ou start não são inteiros ou não respeitam os limites (limit <= 50 e 1 <= start).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": "limit.out.of.bounds",
+                  "message": "Limit query param should be <= 50, received 60"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "components": {
+    "schemas": {
+      "Game": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "O ID da partida."
+          },
+          "auth": {
+            "type": "string",
+            "description": "O GAS de autenticação vinculado à partida."
+          },
+          "cannons": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "description": "Um array com o posicionamento dos navios ao longo das pontes."
+          },
+          "escaped_ships": {
+            "type": "integer",
+            "description": "O número de navios que escaparam."
+          },
+          "getcannons_received": {
+            "type": "integer",
+            "description": "Quantas vezes a chamada getcannons foi feita."
+          },
+          "getturn_received": {
+            "type": "integer",
+            "description": "Quantas vezes a chamada getturn foi feita."
+          },
+          "last_turn": {
+            "type": "integer",
+            "description": "Qual a última rodada dessa partida."
+          },
+          "remaining_life_on_escaped_ships": {
+            "type": "integer",
+            "description": "Soma total da vida dos navios que escaparam."
+          },
+          "servers_authenticated": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Um array com o número de todos os servidores que foram corretamente autenticados."
+          },
+          "ship_moves": {
+            "type": "integer",
+            "description": "Soma total do número de movimentos que os navios fizeram (avançar de um rio para o outro)."
+          },
+          "shot_received": {
+            "type": "integer",
+            "description": "Número de tentativas de tiros recebidas pelo servidor."
+          },
+          "sunk_ships": {
+            "type": "integer",
+            "description": "Número de navios afundados."
+          },
+          "tstamp_auth_completion": {
+            "type": "number",
+            "format": "double",
+            "description": "Timestamp com o momento em que a autenticação foi finalizada."
+          },
+          "tstamp_auth_start": {
+            "type": "number",
+            "format": "double",
+            "description": "Timestamp com o momento em que a autenticação foi iniciada."
+          },
+          "tstamp_completion": {
+            "type": "number",
+            "format": "double",
+            "description": "Timestamp com o momento em que a partida foi finalizada."
+          },
+          "valid_shots": {
+            "type": "integer",
+            "description": "Número de tiros válidos recebidos pelo servidor"
+          }
+        },
+        "required": ["id", "auth", "cannons", "escaped_ships", "getcannons_received", "getturn_received", "last_turn", "remaining_life_on_escaped_ships", "servers_authenticated", "ship_moves", "shot_received", "sunk_ships", "tstamp_auth_completion", "tstamp_auth_start", "tstamp_completion", "valid_shots"]
+      },
+
+      "PaginationResponse": {
+        "type": "object",
+        "properties": {
+          "ranking": {
+            "type": "string",
+            "enum": ["sunk", "escaped"],
+            "description": "Determina o atributo para o qual será recuperado o ranking (sunk para navios afundados e escaped para navios que escaparam)."
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 50,
+            "description": "O número de partidas que foram buscadas."
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Posição no ranking da primeira partida da lista buscada."
+          },
+          "games": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Lista com o ID dos jogos no ranking."
+          },
+          "prev": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL da requisição anterior na paginação do ranking."
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL da próxima requisição na paginação do ranking."
+          }
+        },
+        "required": ["ranking", "limit", "start", "games", "prev", "next"]
+      },
+
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Informa um código que identifica o erro detectado no lado do servidor."
+          },
+          "message": {
+            "type": "string",
+            "description": "Informa a outra ponta sobre o problema que ocorreu enquanto essa requisição era processada."
+          }
+        },
+        "required": ["error", "message"]
       }
     }
   }
