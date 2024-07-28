@@ -1,4 +1,3 @@
-import React from 'react'
 import ReactDOM from 'react-dom/client'
 
 import './styles/globals.css'
@@ -20,11 +19,11 @@ const router = createBrowserRouter([
     errorElement: <NotFound />,
     children: [
       {
-        path: '/',
-        element: <Home />
+        element: <Home />,
+        index: true
       },
       {
-        path: '/games/:gameId',
+        path: 'games/:gameId',
         element: <Game />
       }
     ]

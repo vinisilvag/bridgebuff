@@ -31,6 +31,7 @@
     "react/prop-types": "off",
     "@typescript-eslint/indent": "off",
     "@typescript-eslint/strict-boolean-expressions": "off",
-    "@typescript-eslint/no-floating-promises": "off"
+    "@typescript-eslint/no-floating-promises": "off",
+    "multiline-ternary": "off"
   }
 }

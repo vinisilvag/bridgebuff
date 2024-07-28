@@ -1,9 +1,11 @@
 import sys
+
 from http_requests.http_handler import HttpClientHandler
+
 
 def GAS_with_best_performance(host, port):
     pass
-    
+
 
 def best_cannon_placements(host, port):
     http_handler = HttpClientHandler(host, port)
@@ -28,7 +30,7 @@ def main() -> None:
     analysis = int(sys.argv[3])
     output = sys.argv[4]
 
-    #print(ip, port, analysis, output)
+    # print(ip, port, analysis, output)
 
     match analysis:
         case 1:
