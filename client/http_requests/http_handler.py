@@ -24,7 +24,7 @@ class HttpClientHandler:
         # Tentar se conectar preferencialmente usando IPv6
         client_socket = None
         for addr in addr_info:
-            family, socktype, proto, canonname, sockaddr = addr
+            family, socktype, proto, _, sockaddr = addr
             try:
                 client_socket = socket.socket(family, socktype, proto)
                 client_socket.settimeout(self.timeout)  # Definir tempo limite
