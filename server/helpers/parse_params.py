@@ -9,10 +9,12 @@ def parse_query_params(limit, start):
             None,
             None,
             (
-                jsonify({
-                    "error": True,
-                    "message": "Limit query param should be an integer",
-                }),
+                jsonify(
+                    {
+                        "code": "limit.not.number",
+                        "message": "Limit query param should be an integer",
+                    }
+                ),
                 400,
             ),
         )
@@ -24,10 +26,12 @@ def parse_query_params(limit, start):
             None,
             None,
             (
-                jsonify({
-                    "error": True,
-                    "message": "Start query param should be an integer",
-                }),
+                jsonify(
+                    {
+                        "code": "start.not.number",
+                        "message": "Start query param should be an integer",
+                    }
+                ),
                 400,
             ),
         )
@@ -37,10 +41,12 @@ def parse_query_params(limit, start):
             None,
             None,
             (
-                jsonify({
-                    "error": True,
-                    "message": f"Limit query param should be <= 50, received {limit}",
-                }),
+                jsonify(
+                    {
+                        "code": "limit.out.of.bounds",
+                        "message": f"Limit query param should be <= 50, received {limit}",
+                    }
+                ),
                 400,
             ),
         )
@@ -50,10 +56,12 @@ def parse_query_params(limit, start):
             None,
             None,
             (
-                jsonify({
-                    "error": True,
-                    "message": f"Start query param should be > 0, received {start}",
-                }),
+                jsonify(
+                    {
+                        "code": "start.out.of.bounds",
+                        "message": f"Start query param should be > 0, received {start}",
+                    }
+                ),
                 400,
             ),
         )

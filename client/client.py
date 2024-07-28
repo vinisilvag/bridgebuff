@@ -4,9 +4,48 @@ from collections import defaultdict
 from http_requests.http_handler import HttpClientHandler
 from helpers.cannon_placement import normalize_cannon_placements
 
-def GAS_with_best_performance(host, port):
-    pass
-    
+def GAS_with_best_performance(host, port, output):
+    http_handler = HttpClientHandler(host, port)
+    url = "/api/rank/sunk?limit=50&start=1"
+    top = 100
+
+    games_id = []
+
+    while len(games_id) < top:
+        response = http_handler.make_get_request(url)
+        games_id += response["games"]
+        url = response["next"]
+
+    games_id = games_id[0:top]
+    immortals = {}
+
+    for game_id in games_id:
+        game_data = http_handler.make_get_request(f"/api/game/{game_id}")
+        game = game_data["game_stats"]
+        if game["auth"] not in immortals:
+            immortals[game["auth"]] = {"games": 1, "sunk_ships": game["sunk_ships"]}
+        else:
+            immortals[game["auth"]]["games"] += 1
+            immortals[game["auth"]]["sunk_ships"] += game["sunk_ships"]
+
+    for player in immortals:
+        immortals[player]["sunk_ships_average"] = (
+            immortals[player]["sunk_ships"] / immortals[player]["games"]
+        )
+
+    # properly sort this
+
+    with open(output, "w") as file:
+        writer = csv.writer(file, delimiter=",")
+        for player in immortals:
+            writer.writerow(
+                [
+                    player,
+                    immortals[player]["games"],
+                    immortals[player]["sunk_ships_average"],
+                ]
+            )
+
 
 def best_cannon_placements(host, port, output):
     http_handler = HttpClientHandler(host, port)
@@ -71,11 +110,11 @@ def main() -> None:
     analysis = int(sys.argv[3])
     output = sys.argv[4]
 
-    #print(ip, port, analysis, output)
+    # print(ip, port, analysis, output)
 
     match analysis:
         case 1:
-            GAS_with_best_performance(ip, port)
+            GAS_with_best_performance(ip, port, output)
         case 2:
             best_cannon_placements(ip, port, output)
         case _:
