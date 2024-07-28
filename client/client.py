@@ -6,23 +6,30 @@ from http_requests.http_handler import HttpClientHandler
 
 def GAS_with_best_performance(host, port, output):
     http_handler = HttpClientHandler(host, port)
-    first_half = http_handler.make_get_request("/api/rank/sunk?limit=50&start=1")
-    second_half = http_handler.make_get_request(first_half["next"])
+    url = "/api/rank/sunk?limit=50&start=1"
+    top = 100
 
-    games_id = first_half["games"] + second_half["games"]
+    games_id = []
+
+    while len(games_id) < top:
+        response = http_handler.make_get_request(url)
+        games_id += response["games"]
+        url = response["next"]
+
+    games_id = games_id[0:top]
     immortals = {}
 
     for game_id in games_id:
         game_data = http_handler.make_get_request(f"/api/game/{game_id}")
         game = game_data["game_stats"]
-        if not immortals.get(game["auth"]):
+        if game["auth"] not in immortals:
             immortals[game["auth"]] = {"games": 1, "sunk_ships": game["sunk_ships"]}
         else:
             immortals[game["auth"]]["games"] += 1
             immortals[game["auth"]]["sunk_ships"] += game["sunk_ships"]
 
     for player in immortals:
-        immortals[player]["sunk_ships_mean"] = (
+        immortals[player]["sunk_ships_average"] = (
             immortals[player]["sunk_ships"] / immortals[player]["games"]
         )
 
@@ -35,7 +42,7 @@ def GAS_with_best_performance(host, port, output):
                 [
                     player,
                     immortals[player]["games"],
-                    immortals[player]["sunk_ships_mean"],
+                    immortals[player]["sunk_ships_average"],
                 ]
             )
 

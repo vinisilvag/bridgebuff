@@ -40,13 +40,23 @@ class HttpClientHandler:
 
         try:
             # Formular a requisição
-            linha_requisicao = f"{method} {path} HTTP/1.1\r\n"
-            cabecalhos = f"Host: {self.host}\r\nConnection: keep-alive\r\n\r\n"
-            requisicao = linha_requisicao + cabecalhos
-            print("---------REQUISIÇÃO---------\n" + requisicao)
+            request_line = f"{method} {path} HTTP/1.1\r\n"
+
+            headers = {
+                "Host": self.host,
+                "Content-Type": "application/json",
+                "Connection": "keep-alive",
+            }
+            header_line = ""
+            for key, value in headers.items():
+                header_line += f"{key}: {value}\r\n"
+
+            request = request_line + header_line + "\r\n"
+
+            print("---------REQUISIÇÃO---------\n" + request)
 
             # Enviar a requisição
-            client_socket.sendall(requisicao.encode("utf-8"))
+            client_socket.sendall(request.encode("utf-8"))
 
             # Receber a resposta
             response = b""
