@@ -87,7 +87,7 @@ def best_cannon_placements(host, port, output):
     # Ordenar os resultados pela média de navios escapados
     media_navios_ordenada = sorted(media_navios_por_posicao.items(), key=lambda x: x[1])
 
-    print(media_navios_ordenada)
+    #print(media_navios_ordenada)
 
     # Salvar o resultado em um arquivo CSV
     with open(output, mode='w', newline='') as arquivo_csv:

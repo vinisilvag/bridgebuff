@@ -53,7 +53,7 @@ class HttpClientHandler:
 
             request = request_line + header_line + "\r\n"
 
-            print("---------REQUISIÇÃO---------\n" + request)
+            #print("---------REQUISIÇÃO---------\n" + request)
 
             # Enviar a requisição
             client_socket.sendall(request.encode("utf-8"))
