@@ -77,8 +77,8 @@ export function Game() {
     async function fetchGame() {
       try {
         setLoading(true)
-        const response = await api.get<{ game_id: number, game_stats: IGame }>(
-          `/game/${params.gameId}`
+        const response = await api.get<{ game_id: number; game_stats: IGame }>(
+          `api/game/${params.gameId}`
         )
 
         console.log(response.data)

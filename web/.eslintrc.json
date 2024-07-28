@@ -32,6 +32,7 @@
     "@typescript-eslint/indent": "off",
     "@typescript-eslint/strict-boolean-expressions": "off",
     "@typescript-eslint/no-floating-promises": "off",
-    "multiline-ternary": "off"
+    "multiline-ternary": "off",
+    "@typescript-eslint/member-delimiter-style": "off"
   }
 }

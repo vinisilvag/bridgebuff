@@ -13,7 +13,6 @@ import {
 import { api } from '@/services/api'
 
 import { useToast } from '@/components/ui/use-toast'
-import { useSearchParams } from 'react-router-dom'
 
 import { ContentTable } from '@/components/content-table'
 
@@ -27,11 +26,14 @@ interface RankingResponse {
   start: number
   prev: string | null
   next: string | null
-  games: IGame[]
+  games: number[]
 }
 
 export function Home() {
   const [sort, setSort] = useState('sunk')
+  const [fetchUrl, setFetchUrl] = useState(
+    `api/rank/${sort}?limit=${10}&start=${1}`
+  )
   const [loading, setLoading] = useState(true)
   const [games, setGames] = useState<IGame[]>([])
   const [pagination, setPagination] = useState<{
@@ -40,30 +42,32 @@ export function Home() {
     start: number
     prev: string | null
     next: string | null
-  }>()
-  const [searchParams, setSearchParams] = useSearchParams()
+  } | null>(null)
 
   const { toast } = useToast()
-
-  useEffect(() => {
-    const limit = searchParams.get('limit')
-    const start = searchParams.get('start')
-    setSearchParams({ limit: limit ?? '10', start: start ?? '1' })
-  }, [])
 
   async function fetchGames() {
     try {
       setLoading(true)
 
-      const limit = searchParams.get('limit')
-      const start = searchParams.get('start')
-      const response = await api.get<RankingResponse>(
-        `/rank/${sort}?limit=${limit}&start=${start}`
-      )
+      const response = await api.get<RankingResponse>(fetchUrl)
 
       console.log(response.data)
 
-      setGames(response.data.games)
+      const gamesIds = response.data.games
+      const completeGames: IGame[] = []
+
+      await Promise.all(
+        gamesIds.map(async gameId => {
+          await api
+            .get<{ game_id: number; game_stats: IGame }>(`api/game/${gameId}`)
+            .then(gameResponse => {
+              completeGames.push(gameResponse.data.game_stats)
+            })
+        })
+      )
+
+      setGames(completeGames)
       setPagination({
         ranking: response.data.ranking,
         limit: response.data.limit,
@@ -86,7 +90,7 @@ export function Home() {
 
   useEffect(() => {
     fetchGames()
-  }, [sort])
+  }, [fetchUrl])
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-4">
@@ -96,6 +100,7 @@ export function Home() {
         <Select
           onValueChange={value => {
             setSort(value)
+            setFetchUrl(`api/rank/${value}?limit=${10}&start=${1}`)
           }}
           defaultValue={sort}
         >
@@ -116,28 +121,36 @@ export function Home() {
         <ContentTable games={games} loading={loading} />
       </div>
 
-      <div className="flex flex-row items-center justify-center gap-2">
-        <Button
-          size="sm"
-          variant="ghost"
-          disabled={!pagination?.prev}
-          onClick={async () => {
-            console.log('prev')
-          }}
-        >
-          <ChevronLeft className="h-4 w-4" /> Anterior
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          disabled={!pagination?.next}
-          onClick={async () => {
-            console.log('next')
-          }}
-        >
-          Próximo <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
+      {pagination && (
+        <div className="flex flex-row items-center justify-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={!pagination.prev}
+            onClick={async () => {
+              console.log('previous page')
+              if (pagination.prev) {
+                setFetchUrl(pagination.prev)
+              }
+            }}
+          >
+            <ChevronLeft className="h-4 w-4" /> Anterior
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={!pagination.next}
+            onClick={async () => {
+              console.log('next page')
+              if (pagination.next) {
+                setFetchUrl(pagination.next)
+              }
+            }}
+          >
+            Próximo <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
