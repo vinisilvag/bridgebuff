@@ -1,8 +1,9 @@
-import sys
 import csv
+import sys
 from collections import defaultdict
-from http_requests.http_handler import HttpClientHandler
+
 from helpers.cannon_placement import normalize_cannon_placements
+from http_requests.http_handler import HttpClientHandler
 
 
 def GAS_with_best_performance(host, port, output):

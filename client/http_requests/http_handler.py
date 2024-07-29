@@ -1,6 +1,5 @@
-import socket
 import json
-import select
+import socket
 
 
 class HttpClientHandler:
@@ -15,7 +14,7 @@ class HttpClientHandler:
     def make_head_request(self, path):
         return self._make_request("HEAD", path)
 
-    def _make_request(self, method, path):
+    def _host_resolve(self):
         # Resolver o host para obter informações de endereço
         addr_info = socket.getaddrinfo(
             self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM
@@ -38,6 +37,11 @@ class HttpClientHandler:
         if client_socket is None:
             raise Exception("Não foi possível conectar ao servidor usando IPv4 ou IPv6")
 
+        return client_socket
+
+    def _make_request(self, method, path):
+        client_socket = self._host_resolve()
+
         try:
             # Formular a requisição
             request_line = f"{method} {path} HTTP/1.1\r\n"
@@ -53,7 +57,7 @@ class HttpClientHandler:
 
             request = request_line + header_line + "\r\n"
 
-            #print("---------REQUISIÇÃO---------\n" + request)
+            # print("---------REQUISIÇÃO---------\n" + request)
 
             # Enviar a requisição
             client_socket.sendall(request.encode("utf-8"))
@@ -62,26 +66,17 @@ class HttpClientHandler:
             response = b""
             header_data = b""
             while True:
-                # Usar select para aguardar dados para leitura
-                ready_to_read, _, _ = select.select(
-                    [client_socket], [], [], self.timeout
-                )
+                content = client_socket.recv(1)
+                if not content:
+                    break
 
-                if ready_to_read:
-                    part = client_socket.recv(1024)
-                    if not part:
-                        break
-                    header_data += part
-                    # Check if headers are complete
-                    if b"\r\n\r\n" in header_data:
-                        break
-                else:
-                    raise socket.timeout("Tempo limite de leitura excedido")
+                header_data += content
 
-            # Separa os dados de cabecalho e corpo
-            headers, body = header_data.split(b"\r\n\r\n", 1)
-            headers = headers.decode("utf-8")
-            response += body
+                # Check if headers are complete
+                if b"\r\n\r\n" in header_data:
+                    break
+
+            headers = header_data.decode("utf-8")
 
             # Obter o tamanho do corpo a ser recebido por meio do cabecalho "content-length"
             header_lines = headers.split("\r\n")
@@ -93,13 +88,13 @@ class HttpClientHandler:
 
             # ler o corpo da resposta de acordo com o tamanho
             if content_length is not None:
-                remaining_length = content_length - len(body)
+                remaining_length = content_length
                 while remaining_length > 0:
-                    part = client_socket.recv(min(4096, remaining_length))
-                    if not part:
+                    content = client_socket.recv(1)
+                    if not content:
                         break
-                    response += part
-                    remaining_length -= len(part)
+                    response += content
+                    remaining_length -= 1
 
             # Fechar o socket
             client_socket.close()
@@ -110,11 +105,9 @@ class HttpClientHandler:
                     response_json = json.loads(response.decode("utf-8"))
                     return response_json
                 except json.JSONDecodeError:
-                    print("Failed to decode response as JSON")
-                    return response.decode("utf-8")
+                    raise Exception("Falha ao decodificar a resposta como um JSON")
 
         except socket.timeout:
             raise Exception("Tempo limite de comunicação com o servidor excedido.")
         except socket.error:
-            print("Falha no estabelecimento de conexão com o servidor.")
-            raise
+            raise Exception("Falha no estabelecimento de conexão com o servidor.")
