@@ -1,6 +1,5 @@
 import csv
 import sys
-from collections import defaultdict
 
 from helpers.cannon_placement import normalize_cannon_placements
 from http_requests.http_handler import HttpClientHandler
@@ -36,16 +35,19 @@ def GAS_with_best_performance(host, port, output):
             immortals[player]["sunk_ships"] / immortals[player]["games"]
         )
 
-    # properly sort this
+    # sorted in decreasing order of number of games
+    immortals_sorted = sorted(
+        immortals.items(), key=lambda item: item[1]["games"], reverse=True
+    )
 
     with open(output, "w", newline="") as file:
         writer = csv.writer(file, delimiter=",")
-        for player in immortals:
+        for player, stats in immortals_sorted:
             writer.writerow(
                 [
                     player,
-                    immortals[player]["games"],
-                    immortals[player]["sunk_ships_average"],
+                    stats["games"],
+                    stats["sunk_ships_average"],
                 ]
             )
 
@@ -63,48 +65,44 @@ def best_cannon_placements(host, port, output):
         url = response["next"]
 
     games_id = games_id[0:top]
-    normalised_canonons = []
+    top_meta = {}
 
     for game_id in games_id:
-        # Obtém as estatisticas de um jogo especifico dentre os top100
         game_data = http_handler.make_get_request(f"/api/game/{game_id}")
         game = game_data["game_stats"]
 
-        # Obtem a possicao normalizada dos canhoes
-        cannons = game["cannons"]
-        normalized_cannon_placement = normalize_cannon_placements(cannons)
+        normalized_cannon_placement = normalize_cannon_placements(game["cannons"])
 
-        # Obtem o numero de navios escapados
-        num_escaped_ships = game["escaped_ships"]
+        if normalized_cannon_placement not in top_meta:
+            top_meta[normalized_cannon_placement] = {
+                "games": 1,
+                "escaped_ships": game["escaped_ships"],
+            }
+        else:
+            top_meta[normalized_cannon_placement]["games"] += 1
+            top_meta[normalized_cannon_placement]["escaped_ships"] += game[
+                "escaped_ships"
+            ]
 
-        # Armazena os canhoes normalizados e o numero de navios escapados
-        normalised_canonons.append((normalized_cannon_placement, num_escaped_ships))
+    for placement in top_meta:
+        top_meta[placement]["escaped_ships_average"] = (
+            top_meta[placement]["escaped_ships"] / top_meta[placement]["games"]
+        )
 
-    # Dicionários para armazenar a soma dos navios que escaparam e o número de ocorrências por posição de canhões
-    soma_navios_por_posicao = defaultdict(int)
-    contagem_por_posicao = defaultdict(int)
+    # sorted in decreasing order of number of games
+    top_meta_sorted = sorted(
+        top_meta.items(), key=lambda item: item[1]["escaped_ships"]
+    )
 
-    # Agrupar e somar os navios que escaparam por posição, contando o número de ocorrências
-    for posicao, navios in normalised_canonons:
-        soma_navios_por_posicao[posicao] += navios
-        contagem_por_posicao[posicao] += 1
-
-    # Calcular a média de navios que escaparam por posição
-    media_navios_por_posicao = {
-        posicao: soma_navios_por_posicao[posicao] / contagem_por_posicao[posicao]
-        for posicao in soma_navios_por_posicao
-    }
-
-    # Ordenar os resultados pela média de navios escapados
-    media_navios_ordenada = sorted(media_navios_por_posicao.items(), key=lambda x: x[1])
-
-    # print(media_navios_ordenada)
-
-    # Salvar o resultado em um arquivo CSV
-    with open(output, mode="w", newline="") as arquivo_csv:
-        escritor_csv = csv.writer(arquivo_csv)
-        for posicao, media in media_navios_ordenada:
-            escritor_csv.writerow([posicao, media])
+    with open(output, "w", newline="") as file:
+        writer = csv.writer(file, delimiter=",")
+        for placement, stats in top_meta_sorted:
+            writer.writerow(
+                [
+                    placement,
+                    stats["escaped_ships_average"],
+                ]
+            )
 
 
 def main() -> None:

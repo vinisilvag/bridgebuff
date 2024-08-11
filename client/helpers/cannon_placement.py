@@ -4,8 +4,7 @@ def normalize_cannon_placements(placements):
 
     # Iterar sobre cada sublista
     for placement in placements:
-
-        # Obtem a 'row' 
+        # Obtem a 'row'
         row = placement[1]
 
         # Conta o número de ocorrencias de cada 'row'
@@ -13,7 +12,7 @@ def normalize_cannon_placements(placements):
             contagem[row] += 1
         else:
             contagem[row] = 1
-    
+
     # Lista de contagens de 1 a 8
     contagens_frequencia = [0] * 8
 
@@ -23,6 +22,6 @@ def normalize_cannon_placements(placements):
             contagens_frequencia[count - 1] += 1
 
     # Converter a lista de contagens em uma string
-    resultado = ''.join(map(str, contagens_frequencia))
-    
+    resultado = "".join(map(str, contagens_frequencia))
+
     return resultado
