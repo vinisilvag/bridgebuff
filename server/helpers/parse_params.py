@@ -2,6 +2,36 @@ from flask import jsonify
 
 
 def parse_query_params(limit, start):
+    if not limit:
+        return (
+            None,
+            None,
+            (
+                jsonify(
+                    {
+                        "code": "limit.missing",
+                        "message": "Limit query param is missing",
+                    }
+                ),
+                400,
+            ),
+        )
+
+    if not start:
+        return (
+            None,
+            None,
+            (
+                jsonify(
+                    {
+                        "code": "start.missing",
+                        "message": "Start query param is missing",
+                    }
+                ),
+                400,
+            ),
+        )
+
     if limit.isdecimal():
         limit = int(limit)
     else:
