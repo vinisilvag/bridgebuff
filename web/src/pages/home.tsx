@@ -57,15 +57,13 @@ export function Home() {
       const gamesIds = response.data.games
       const completeGames: IGame[] = []
 
-      await Promise.all(
-        gamesIds.map(async gameId => {
-          await api
-            .get<{ game_id: number; game_stats: IGame }>(`api/game/${gameId}`)
-            .then(gameResponse => {
-              completeGames.push(gameResponse.data.game_stats)
-            })
-        })
-      )
+      for (const gameId of gamesIds) {
+        await api
+          .get<{ game_id: number; game_stats: IGame }>(`api/game/${gameId}`)
+          .then(gameResponse => {
+            completeGames.push(gameResponse.data.game_stats)
+          })
+      }
 
       setGames(completeGames)
       setPagination({
